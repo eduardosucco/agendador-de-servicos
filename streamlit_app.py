@@ -9,6 +9,7 @@ URLS = {
     "get_clients": f"{BASE_URL}/clientes",
     "get_appointments": f"{BASE_URL}/agendamentos",
     "delete_appointment": f"{BASE_URL}/agendamento/:id",
+    "update_appointment": f"{BASE_URL}/agendamento/:id",  # Supondo que PUT seja usado para atualizar
 }
 
 # Streamlit interface
@@ -19,21 +20,102 @@ def api_request(url, method="GET", data=None):
     try:
         response = requests.request(method, url, json=data)
         response.raise_for_status()
-        return response.json()
+        if method == "GET":
+            return response.json()
+        return True
     except Exception as e:
         st.error(f"Erro: {e}")
-        return []
+        return [] if method == "GET" else False
 
-# Funções das páginas
-# def agendamentos():
-#     st.title("Agendamentos")
-#     appointments = api_request(URLS["get_appointments"])
-#     if appointments:
-#         df = pd.DataFrame(appointments)
-#         st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
-#     else:
-#         st.warning("Nenhum agendamento encontrado.")
+# Função para deletar agendamento
+def delete_appointment(appointment_id):
+    endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
+    confirm = st.session_state.get(f"confirm_delete_{appointment_id}", False)
+    
+    if not confirm:
+        if st.button("Confirmar Exclusão", key=f"confirm_{appointment_id}"):
+            st.session_state[f"confirm_delete_{appointment_id}"] = True
+            st.experimental_rerun()
+    else:
+        if api_request(endpoint, method="DELETE"):
+            st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
+            st.session_state.pop(f"confirm_delete_{appointment_id}", None)
+            st.experimental_rerun()
 
+# Função para alterar agendamento
+def alterar_agendamento(appointment_id):
+    st.title("Alterar Agendamento")
+    
+    # Buscar detalhes do agendamento específico
+    appointments = api_request(URLS["get_appointments"])
+    appointment = next((item for item in appointments if item["id"] == appointment_id), None)
+    
+    if appointment:
+        with st.form(key="alterar_form"):
+            cliente = st.text_input("Cliente", value=appointment.get("cliente", ""))
+            data = st.date_input("Data", value=pd.to_datetime(appointment.get("data")))
+            hora = st.time_input("Hora", value=pd.to_datetime(appointment.get("hora")).time())
+            servico = st.text_input("Serviço", value=appointment.get("servico", ""))
+            
+            submit_button = st.form_submit_button(label="Salvar Alterações")
+            
+            if submit_button:
+                updated_data = {
+                    "cliente": cliente,
+                    "data": data.isoformat(),
+                    "hora": hora.strftime("%H:%M:%S"),
+                    "servico": servico
+                }
+                endpoint = URLS["update_appointment"].replace(":id", str(appointment_id))
+                if api_request(endpoint, method="PUT", data=updated_data):
+                    st.success("Agendamento alterado com sucesso!")
+                    st.experimental_rerun()
+    else:
+        st.error("Agendamento não encontrado.")
+
+# Função de Agendamentos
+def agendamentos():
+    st.title("Agendamentos")
+    
+    # Verificar se estamos na página de alteração
+    query_params = st.experimental_get_query_params()
+    if "page" in query_params and query_params["page"][0] == "alterar_agendamento" and "id" in query_params:
+        alterar_agendamento(query_params["id"][0])
+        return
+    
+    # Buscar agendamentos
+    appointments = api_request(URLS["get_appointments"])
+    if appointments:
+        df = pd.DataFrame(appointments)
+        
+        # Exibir DataFrame sem a coluna 'id'
+        display_df = df.drop(columns=["id"], errors="ignore")
+        st.dataframe(display_df, use_container_width=True)
+        
+        st.markdown("---")
+        
+        # Exibir ações para cada agendamento
+        for index, row in df.iterrows():
+            cols = st.columns([4, 1, 1])
+            
+            # Informações do agendamento
+            with cols[0]:
+                st.write(f"**Cliente**: {row['cliente']} | **Data**: {row['data']} | **Hora**: {row['hora']} | **Serviço**: {row.get('servico', '')}")
+            
+            # Botão Alterar
+            with cols[1]:
+                if st.button("Alterar", key=f"alter_{row['id']}"):
+                    st.experimental_set_query_params(page="alterar_agendamento", id=row["id"])
+                    st.experimental_rerun()
+            
+            # Botão Excluir
+            with cols[2]:
+                if st.button("Excluir", key=f"delete_{row['id']}"):
+                    delete_appointment(row["id"])
+    else:
+        st.warning("Nenhum agendamento encontrado.")
+
+# Função de Clientes
 def clientes():
     st.title("Clientes")
     clients = api_request(URLS["get_clients"])
@@ -47,58 +129,18 @@ def clientes():
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
-def agendamentos():
-    st.title("Agendamentos")
-    appointments = api_request(URLS["get_appointments"])
-    if appointments:
-        df = pd.DataFrame(appointments)
+# Função de Novo Agendamento
+def novo_agendamento():
+    st.title("Novo Agendamento")
+    st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-        # Adicionar coluna de botões para exclusão
-        for index, row in df.iterrows():
-            col1, col2 = st.columns([4, 1])
-            with col1:
-                st.write(f"**Cliente**: {row['cliente']}, **Data**: {row['data']}, **Hora**: {row['hora']}")
-            with col2:
-                if st.button("Excluir", key=f"delete_{row['id']}"):
-                    delete_appointment(row["id"])
-    else:
-        st.warning("Nenhum agendamento encontrado.")
-
-def delete_appointment(appointment_id):
-    endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
-    if api_request(endpoint, method="DELETE"):
-        st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
-        st.experimental_rerun()
-
-# NavBar na Sidebar
+# Menu de Navegação com Option Menu na Sidebar
 with st.sidebar:
     selected = option_menu(
         "Menu", ["Agendamentos", "Clientes", "Novo Agendamento"],
         icons=["calendar-check", "people", "plus-circle"],
         menu_icon="cast", default_index=0
     )
-
-def novo_agendamento():
-    st.title("Novo Agendamento")
-    
-    # Formulário para cadastrar agendamento
-    cliente = st.text_input("Nome do Cliente")
-    data = st.date_input("Data do Agendamento")
-    hora = st.time_input("Hora do Agendamento")
-    servico = st.text_input("Serviço")
-    
-    if st.button("Cadastrar"):
-        # Dados do novo agendamento
-        agendamento = {
-            "cliente": cliente,
-            "data": str(data),
-            "hora": str(hora),
-            "servico": servico,
-        }
-        response = api_request(URLS["get_appointments"], method="POST", data=agendamento)
-        if response:
-            st.success("Agendamento cadastrado com sucesso!")
-            st.experimental_rerun()
 
 # Navegar para a página selecionada
 if selected == "Agendamentos":
