@@ -85,6 +85,8 @@ def agendamentos():
     df = pd.DataFrame(appointments)
     if "appointment_time" in df.columns:
         df["Data"], df["Hora"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%d/%m/%Y"), pd.to_datetime(df["appointment_time"]).dt.strftime("%H:%M")
+    if "phone" in df.columns:
+        df["phone"] = df["phone"].astype(str)
 
     st.dataframe(df.rename(columns={
         "name": "Nome e Sobrenome", 
@@ -92,7 +94,6 @@ def agendamentos():
         "service": "Serviço", 
         "first_time": "Primeira Vez?"
     }).drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore"), use_container_width=True)
-
 
 # Função de Clientes
 def clientes():
