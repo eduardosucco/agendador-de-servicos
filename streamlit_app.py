@@ -112,7 +112,11 @@ def clientes():
     clients = api_request(URLS["get_clients"])
     if clients:
         df = pd.DataFrame(clients)
-        st.dataframe(df, use_container_width=True)  # Tabela completa
+        df = df.rename(columns={"name": "Nome e Sobrenome", "phone": "Telefone"})
+        df = df.drop(columns=["id", "created_at"], errors="ignore")
+        if "Telefone" in df.columns:
+            df["Telefone"] = df["Telefone"].astype(str)
+        st.dataframe(df, use_container_width=True)
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
