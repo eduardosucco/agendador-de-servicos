@@ -83,24 +83,16 @@ def agendamentos():
         return
 
     df = pd.DataFrame(appointments)
-
-    # Processar e formatar dados
     if "appointment_time" in df.columns:
-        appointment_times = pd.to_datetime(df["appointment_time"])
-        df["Data"], df["Hora"] = appointment_times.dt.strftime("%d/%m/%Y"), appointment_times.dt.strftime("%H:%M")
+        df["Data"], df["Hora"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%d/%m/%Y"), pd.to_datetime(df["appointment_time"]).dt.strftime("%H:%M")
 
-    df = df.rename(columns={
+    st.dataframe(df.rename(columns={
         "name": "Nome e Sobrenome", 
         "phone": "Telefone", 
         "service": "Serviço", 
         "first_time": "Primeira Vez?"
-    }).drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore")
+    }).drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore"), use_container_width=True)
 
-    if "Telefone" in df.columns:
-        df["Telefone"] = df["Telefone"].astype(str)
-
-    # Exibir tabela
-    st.dataframe(df, use_container_width=True)
 
 # Função de Clientes
 def clientes():
