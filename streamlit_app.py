@@ -26,14 +26,22 @@ def agendamentos():
 
     # Buscar agendamentos
     appointments = api_request(URLS["get_appointments"])
+
     if appointments:
-        # Selecionar apenas Nome do Cliente, Data e Hora
-        df = pd.DataFrame(appointments)[["cliente", "data", "hora", "id"]]
+        # Garantir que todas as colunas necessárias estão presentes
+        df = pd.DataFrame(appointments)
+        if not all(col in df.columns for col in ["cliente", "data", "hora", "id"]):
+            st.error("A API não retornou os campos esperados: 'cliente', 'data', 'hora', 'id'.")
+            st.write(df)  # Exibir os dados para depuração
+            return
+
+        # Selecionar colunas relevantes
+        df = df[["cliente", "data", "hora", "id"]]
         df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
 
         # Renderizar tabela com botões na última coluna
-        for index, row in df.iterrows():
-            cols = st.columns([3, 1, 1])  # Layout: Cliente | Alterar | Excluir
+        for _, row in df.iterrows():
+            cols = st.columns([4, 1, 1])  # Layout: Cliente | Alterar | Excluir
             with cols[0]:
                 st.write(f"**{row['Cliente']}** | **Data**: {row['Data']} | **Hora**: {row['Hora']}")
             with cols[1]:
