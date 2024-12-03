@@ -79,6 +79,8 @@ def agendamentos():
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
+        df = df.rename(columns={"service": "Serviço", "first_time": "Primeira Vez?"})
+        df = df.drop(columns=["id", "client_id", "created_at", "deleted_at"], errors="ignore")
         st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
     else:
         st.warning("Nenhum agendamento encontrado.")
