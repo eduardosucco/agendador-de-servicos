@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -47,6 +47,12 @@ def create_appointment():
         appointment_time = datetime.fromisoformat(appointment_time_str)
     except ValueError:
         return jsonify({'message': 'Formato de data e hora inválido.'}), 400
+
+    # Verificar se o horário está entre 8h e 19h em intervalos de 1h
+    start_time = appointment_time.replace(hour=8, minute=0, second=0, microsecond=0)
+    end_time = appointment_time.replace(hour=19, minute=0, second=0, microsecond=0)
+    if appointment_time < start_time or appointment_time > end_time or appointment_time.minute != 0:
+        return jsonify({'message': 'Horário inválido. Escolha horários de 1h em 1h, entre 08:00 e 19:00.'}), 400
 
     # Verifica se o cliente já existe
     response = supabase.table('clients').select('*').eq('email', email).single().execute()

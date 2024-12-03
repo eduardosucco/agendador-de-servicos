@@ -2,24 +2,50 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agendar Serviço</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
 <body>
     <h1>Agendar Serviço</h1>
     <form id="appointment-form">
         <label>Nome:</label>
         <input type="text" name="name" required><br>
+        
         <label>Email:</label>
         <input type="email" name="email" required><br>
+        
         <label>Telefone:</label>
         <input type="text" name="phone" required><br>
+        
         <label>Serviço:</label>
         <input type="text" name="service" required><br>
+        
         <label>Data e Hora:</label>
-        <input type="datetime-local" name="appointment_time" required><br>
+        <input type="datetime-local" name="appointment_time" step="3600" min="08:00" max="19:00" required><br>
+        
         <button type="submit">Agendar</button>
     </form>
-    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script>
+        document.getElementById('appointment-form').addEventListener('submit', async function(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            const response = await fetch('/api/appointments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert('Agendamento realizado com sucesso!');
+                event.target.reset();
+            } else {
+                const error = await response.json();
+                alert(`Erro: ${error.message}`);
+            }
+        });
+    </script>
 </body>
 </html>
