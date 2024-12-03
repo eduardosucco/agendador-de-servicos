@@ -29,7 +29,6 @@ def api_request(url, method="GET", data=None):
 
 # Função para deletar agendamento
 def delete_appointment(appointment_id):
-    endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
     confirm = st.session_state.get(f"confirm_delete_{appointment_id}", False)
     
     if not confirm:
@@ -37,6 +36,7 @@ def delete_appointment(appointment_id):
             st.session_state[f"confirm_delete_{appointment_id}"] = True
             st.experimental_rerun()
     else:
+        endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
         if api_request(endpoint, method="DELETE"):
             st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
             st.session_state.pop(f"confirm_delete_{appointment_id}", None)
@@ -77,20 +77,11 @@ def alterar_agendamento(appointment_id):
 def agendamentos():
     st.title("Agendamentos")
     
-    # Verificar se estamos na página de alteração
-    query_params = st.experimental_get_query_params()
-    if "page" in query_params and query_params["page"][0] == "alterar_agendamento" and "id" in query_params:
-        alterar_agendamento(query_params["id"][0])
-        return
-    
     # Buscar agendamentos
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
-        
-        # Exibir DataFrame sem a coluna 'id'
-        display_df = df.drop(columns=["id"], errors="ignore")
-        st.dataframe(display_df, use_container_width=True)
+        st.dataframe(df, use_container_width=True)  # Exibir tabela completa
         
         st.markdown("---")
         
@@ -98,9 +89,9 @@ def agendamentos():
         for index, row in df.iterrows():
             cols = st.columns([4, 1, 1])
             
-            # Informações do agendamento
+            # Exibir as colunas de ações
             with cols[0]:
-                st.write(f"**Cliente**: {row['cliente']} | **Data**: {row['data']} | **Hora**: {row['hora']} | **Serviço**: {row.get('servico', '')}")
+                st.write(f"**ID**: {row['id']} | **Cliente**: {row['cliente']} | **Data**: {row['data']} | **Hora**: {row['hora']}")
             
             # Botão Alterar
             with cols[1]:
@@ -121,11 +112,7 @@ def clientes():
     clients = api_request(URLS["get_clients"])
     if clients:
         df = pd.DataFrame(clients)
-        df = df.rename(columns={"name": "Nome e Sobrenome", "phone": "Telefone"})
-        df = df.drop(columns=["id", "created_at"], errors="ignore")
-        if "Telefone" in df.columns:
-            df["Telefone"] = df["Telefone"].astype(str)
-        st.dataframe(df, use_container_width=True)
+        st.dataframe(df, use_container_width=True)  # Tabela completa
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
@@ -143,7 +130,10 @@ with st.sidebar:
     )
 
 # Navegar para a página selecionada
-if selected == "Agendamentos":
+query_params = st.experimental_get_query_params()
+if "page" in query_params and query_params["page"][0] == "alterar_agendamento" and "id" in query_params:
+    alterar_agendamento(query_params["id"][0])
+elif selected == "Agendamentos":
     agendamentos()
 elif selected == "Clientes":
     clientes()
