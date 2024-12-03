@@ -1,0 +1,49 @@
+[project]
+name = "agendador-de-servicos"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "flask>=3.1.0",
+    "flask-cors>=5.0.0",
+    "google-api-python-client>=2.154.0",
+    "google-auth>=2.36.0",
+    "google-auth-httplib2>=0.2.0",
+    "google-auth-oauthlib>=1.2.1",
+    "pyjwt>=2.10.1",
+    "python-dotenv>=1.0.1",
+    "requests>=2.32.3",
+    "supabase>=2.10.0",
+]
+
+[dependency-groups]
+dev = [
+    "black>=24.10.0",
+    "pytest>=8.3.4",
+]
+
+[tool.poetry]
+name = "agendador-de-servicos"
+version = "0.1.0"
+description = ""
+authors = ["Eduardo Succo <eduardo.succo@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+flask = "^2.3.0"
+flask-cors = "^5.0.0"
+supabase = "^2.10.0"
+pyjwt = "^2.10.1"
+requests = "^2.32.3"
+python-dotenv = "^1.0.1"
+google-auth = "^2.36.0"
+google-auth-oauthlib = "^1.2.1"
+google-auth-httplib2 = "^0.2.0"
+google-api-python-client = "^2.154.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
