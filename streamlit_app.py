@@ -23,9 +23,13 @@ def api_request(url, method="GET", data=None):
 # Função para exibir DataFrame com ações
 def show_table_with_actions(df, delete_action=None, edit_action=None):
     for idx, row in df.iterrows():
+        cliente = row.get("cliente", "Não informado")
+        servico = row.get("servico", "Não informado")
+        data = row.get("data", "Não informado")
+        hora = row.get("hora", "Não informado")
         cols = st.columns([4, 1, 1])  # Ajuste do layout
         with cols[0]:
-            st.write(f"**Cliente**: {row['cliente']} | **Serviço**: {row['servico']} | **Data**: {row['data']} | **Hora**: {row['hora']}")
+            st.write(f"**Cliente**: {cliente} | **Serviço**: {servico} | **Data**: {data} | **Hora**: {hora}")
         with cols[1]:
             if st.button("Editar", key=f"edit_{row['id']}"):
                 if edit_action:
