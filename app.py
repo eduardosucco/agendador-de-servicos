@@ -90,4 +90,5 @@ def get_appointments():
     return jsonify(appointments), 200
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Remova o parâmetro 'debug=True' em produção
+    app.run()
