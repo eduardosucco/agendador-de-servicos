@@ -31,62 +31,66 @@ def admin():
 
 @app.route('/api/appointments', methods=['POST'])
 def create_appointment():
-    """
-    Endpoint para receber dados do Jotform via webhook.
-    """
-    data = request.json  # Jotform envia os dados em JSON
-
-    # Mapear os campos enviados pelo Jotform
-    name = data.get('name')  # Substitua conforme os nomes dos campos no Jotform
-    email = data.get('email')
-    phone = data.get('phone')
-    service = data.get('service')
-    appointment_time_str = data.get('appointment_time')
-
-    # Validação básica dos dados
-    if not all([name, email, phone, service, appointment_time_str]):
-        return jsonify({'message': 'Dados incompletos recebidos.'}), 400
-
-    # Validar formato da data e hora
+    app.logger.info("Webhook acionado!")
     try:
-        appointment_time = datetime.fromisoformat(appointment_time_str)
-    except ValueError:
-        return jsonify({'message': 'Formato de data e hora inválido.'}), 400
+        data = request.json
+        app.logger.info(f"Dados recebidos: {data}")
+        
+        # Mapear os campos
+        name = data.get('name')
+        email = data.get('email')
+        phone = data.get('phone')
+        service = data.get('service')
+        appointment_time_str = data.get('appointment_time')
 
-    # Validar se o horário está entre 8h e 19h em incrementos de 1h
-    start_time = appointment_time.replace(hour=8, minute=0, second=0, microsecond=0)
-    end_time = appointment_time.replace(hour=19, minute=0, second=0, microsecond=0)
-    if appointment_time < start_time or appointment_time > end_time or appointment_time.minute != 0:
-        return jsonify({'message': 'Horário inválido. Escolha horários de 1h em 1h, entre 08:00 e 19:00.'}), 400
+        # Verificar dados recebidos
+        if not all([name, email, phone, service, appointment_time_str]):
+            app.logger.error("Dados incompletos recebidos.")
+            return jsonify({'message': 'Dados incompletos recebidos.'}), 400
 
-    # Verificar ou criar cliente no Supabase
-    response = supabase.table('clients').select('*').eq('email', email).single().execute()
-    if response.status_code != 200:
-        return jsonify({'message': 'Erro ao acessar o Supabase.'}), 500
+        # Validar formato de data e hora
+        try:
+            appointment_time = datetime.fromisoformat(appointment_time_str)
+        except ValueError as e:
+            app.logger.error(f"Erro de conversão de data: {e}")
+            return jsonify({'message': 'Formato de data e hora inválido.'}), 400
 
-    client = response.data
-    if not client:
-        new_client = supabase.table('clients').insert({
-            'name': name,
-            'email': email,
-            'phone': phone
+        # Validar horário
+        start_time = appointment_time.replace(hour=8, minute=0, second=0, microsecond=0)
+        end_time = appointment_time.replace(hour=19, minute=0, second=0, microsecond=0)
+        if appointment_time < start_time or appointment_time > end_time or appointment_time.minute != 0:
+            app.logger.error("Horário inválido.")
+            return jsonify({'message': 'Horário inválido. Escolha horários de 1h em 1h, entre 08:00 e 19:00.'}), 400
+
+        # Verificar ou criar cliente no Supabase
+        response = supabase.table('clients').select('*').eq('email', email).single().execute()
+        app.logger.info(f"Resposta Supabase (SELECT): {response.data}")
+
+        client = response.data
+        if not client:
+            new_client = supabase.table('clients').insert({
+                'name': name,
+                'email': email,
+                'phone': phone
+            }).execute()
+            app.logger.info(f"Cliente criado: {new_client.data}")
+            client_id = new_client.data[0]['id']
+        else:
+            client_id = client['id']
+
+        # Criar o agendamento
+        appointment = supabase.table('appointments').insert({
+            'client_id': client_id,
+            'service': service,
+            'appointment_time': appointment_time.isoformat()
         }).execute()
-        if new_client.status_code != 201:
-            return jsonify({'message': 'Erro ao criar cliente.'}), 500
-        client_id = new_client.data[0]['id']
-    else:
-        client_id = client['id']
+        app.logger.info(f"Agendamento criado: {appointment.data}")
 
-    # Criar o agendamento
-    appointment = supabase.table('appointments').insert({
-        'client_id': client_id,
-        'service': service,
-        'appointment_time': appointment_time.isoformat()
-    }).execute()
-    if appointment.status_code != 201:
-        return jsonify({'message': 'Erro ao criar agendamento.'}), 500
+        return jsonify({'message': 'Agendamento criado com sucesso!'}), 201
 
-    return jsonify({'message': 'Agendamento criado com sucesso!'}), 201
+    except Exception as e:
+        app.logger.error(f"Erro inesperado: {e}")
+        return jsonify({'message': 'Erro interno no servidor.'}), 500
 
 @app.route('/api/appointments', methods=['GET'])
 def get_appointments():
