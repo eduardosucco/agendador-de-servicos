@@ -86,7 +86,22 @@ def clientes():
 # Página Novo Agendamento
 def novo_agendamento():
     st.title("Novo Agendamento")
-    st.warning("Funcionalidade de agendamento ainda não implementada.")
+
+    # Substitua o URL abaixo pelo link do seu formulário JotForm
+    jotform_url = "https://form.jotform.com/243372617278665"
+
+    # Código do iframe para incorporar o formulário
+    iframe_code = f"""
+    <iframe 
+        src="{jotform_url}" 
+        width="100%" 
+        height="800" 
+        style="border:none;">
+    </iframe>
+    """
+
+    # Exibir o formulário no Streamlit
+    st.components.v1.html(iframe_code, height=800)
 
 # Menu de Navegação
 with st.sidebar:
