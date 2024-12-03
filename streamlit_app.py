@@ -21,12 +21,16 @@ def api_request(url, method="GET", data=None):
         st.error(f"Erro: {e}")
         return []
 
-# Páginas
+# Funções das páginas
 def agendamentos():
     st.title("Agendamentos")
     appointments = api_request(URLS["get_appointments"])
     if appointments:
-        df = pd.DataFrame(appointments)[["cliente", "data", "hora", "id"]]
+        df = pd.DataFrame(appointments)
+        if not all(col in df.columns for col in ["cliente", "data", "hora", "id"]):
+            st.error("A API não retornou os campos esperados: 'cliente', 'data', 'hora', 'id'.")
+            return
+        df = df[["cliente", "data", "hora", "id"]]
         df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
         for _, row in df.iterrows():
             cols = st.columns([3, 1, 1])
@@ -58,20 +62,25 @@ def novo_agendamento():
     st.title("Novo Agendamento")
     st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-# Ação de Exclusão de Agendamento
 def delete_appointment(appointment_id):
     endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
     if api_request(endpoint, method="DELETE"):
         st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
         st.experimental_rerun()
 
-# Menu de Navegação com Option Menu
-with st.sidebar:
-    selected = option_menu(
-        "Menu", ["Agendamentos", "Clientes", "Novo Agendamento"],
-        icons=["calendar-check", "people", "plus-circle"],
-        menu_icon="menu-app", default_index=0
-    )
+# Barra de Navegação (NavBar)
+selected = option_menu(
+    menu_title=None,  # Sem título no menu
+    options=["Agendamentos", "Clientes", "Novo Agendamento"],
+    icons=["calendar-check", "people", "plus-circle"],
+    menu_icon="menu-app", default_index=0, orientation="horizontal",
+    styles={
+        "container": {"padding": "0!important", "background-color": "#fafafa"},
+        "icon": {"color": "orange", "font-size": "20px"}, 
+        "nav-link": {"font-size": "20px", "text-align": "center", "margin": "0px", "--hover-color": "#eee"},
+        "nav-link-selected": {"background-color": "#FFD700"},
+    }
+)
 
 # Navegar para a página selecionada
 if selected == "Agendamentos":
