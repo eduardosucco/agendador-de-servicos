@@ -86,7 +86,7 @@ def agendamentos():
             df["Hora"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%H:%M")
 
         # Renomear colunas
-        df = df.rename(columns={"service": "Serviço", "first_time": "Primeira Vez?"})
+        df = df.rename(columns={"name": "Nome e Sobrenome", "phone": "Telefone", "service": "Serviço", "first_time": "Primeira Vez?"})
 
         # Remover colunas indesejadas
         df = df.drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore")
