@@ -3,13 +3,13 @@ import pandas as pd
 import requests
 
 # URLs dos seus endpoints no n8n
-N8N_BASE_URL = "https://seu-endereco-n8n.com/webhook" #https://n8n.massadar.me/webhook-test/agendador-de-servicos/agendamentos
-GET_CLIENTS_URL = f"{N8N_BASE_URL}/get_clients"
-GET_APPOINTMENTS_URL = f"{N8N_BASE_URL}/get_appointments"
-ADD_CLIENT_URL = f"{N8N_BASE_URL}/add_client"
-ADD_APPOINTMENT_URL = f"{N8N_BASE_URL}/add_appointment"
-DELETE_CLIENT_URL = f"{N8N_BASE_URL}/delete_client"
-DELETE_APPOINTMENT_URL = f"{N8N_BASE_URL}/delete_appointment"
+N8N_BASE_URL = "https://n8n.massadar.me/webhook/agendador-de-servicos"
+GET_CLIENTS_URL = f"{N8N_BASE_URL}/clientes"
+GET_APPOINTMENTS_URL = f"{N8N_BASE_URL}/agendamentos"
+# ADD_CLIENT_URL = f"{N8N_BASE_URL}/add_client"
+# ADD_APPOINTMENT_URL = f"{N8N_BASE_URL}/add_appointment"
+# DELETE_CLIENT_URL = f"{N8N_BASE_URL}/agendamento/:id"
+DELETE_APPOINTMENT_URL = f"{N8N_BASE_URL}/agendamento/:id"
 
 st.set_page_config(page_title="Plataforma de Agendamento", layout="wide")
 
@@ -24,10 +24,10 @@ with tab1:
     df_clients = pd.DataFrame(clients)
     st.dataframe(df_clients)
 
-    client_id_to_delete = st.text_input("ID do Cliente para Deletar")
-    if st.button("Deletar Cliente"):
-        requests.post(DELETE_CLIENT_URL, json={"client_id": client_id_to_delete})
-        st.success("Cliente deletado com sucesso!")
+    # client_id_to_delete = st.text_input("ID do Cliente para Deletar")
+    # if st.button("Deletar Cliente"):
+    #     requests.post(DELETE_CLIENT_URL, json={"client_id": client_id_to_delete})
+    #     st.success("Cliente deletado com sucesso!")
 
     st.subheader("Agendamentos")
     appointments = requests.get(GET_APPOINTMENTS_URL).json()
@@ -50,16 +50,16 @@ with tab2:
     email = st.text_input("Email")
     first_time = st.selectbox("Primeira vez?", ["Sim", "Não"])
 
-    if st.button("Cadastrar Cliente"):
-        client_data = {
-            "first_name": first_name,
-            "last_name": last_name,
-            "phone": phone,
-            "email": email,
-            "first_time": first_time
-        }
-        requests.post(ADD_CLIENT_URL, json=client_data)
-        st.success("Cliente cadastrado com sucesso!")
+    # if st.button("Cadastrar Cliente"):
+    #     client_data = {
+    #         "first_name": first_name,
+    #         "last_name": last_name,
+    #         "phone": phone,
+    #         "email": email,
+    #         "first_time": first_time
+    #     }
+    #     requests.post(ADD_CLIENT_URL, json=client_data)
+    #     st.success("Cliente cadastrado com sucesso!")
 
     st.subheader("Agendar Serviço")
     clients = requests.get(GET_CLIENTS_URL).json()
@@ -71,13 +71,13 @@ with tab2:
     time = st.time_input("Hora")
     comment = st.text_area("Comentário")
 
-    if st.button("Agendar Serviço"):
-        appointment_data = {
-            "client_id": client_options[selected_client],
-            "service": service,
-            "date": str(date),
-            "time": str(time),
-            "comment": comment
-        }
-        requests.post(ADD_APPOINTMENT_URL, json=appointment_data)
-        st.success("Agendamento realizado com sucesso!")
+    # if st.button("Agendar Serviço"):
+    #     appointment_data = {
+    #         "client_id": client_options[selected_client],
+    #         "service": service,
+    #         "date": str(date),
+    #         "time": str(time),
+    #         "comment": comment
+    #     }
+    #     requests.post(ADD_APPOINTMENT_URL, json=appointment_data)
+    #     st.success("Agendamento realizado com sucesso!")
