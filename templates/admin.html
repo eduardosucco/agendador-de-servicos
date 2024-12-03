@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Agendamentos</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <h1>Agendamentos</h1>
+    <table id="appointments-table" border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Cliente</th>
+                <th>Serviço</th>
+                <th>Data e Hora</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Agendamentos serão inseridos aqui -->
+        </tbody>
+    </table>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
