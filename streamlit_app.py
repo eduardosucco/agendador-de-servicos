@@ -20,88 +20,69 @@ def api_request(url, method="GET", data=None):
         st.error(f"Erro: {e}")
         return []
 
-# Página de Agendamentos
+# Páginas
 def agendamentos():
     st.title("Agendamentos")
+    st.write("Conteúdo da página de Agendamentos.")
 
-    # Buscar agendamentos
-    appointments = api_request(URLS["get_appointments"])
-
-    if appointments:
-        # Garantir que todas as colunas necessárias estão presentes
-        df = pd.DataFrame(appointments)
-        if not all(col in df.columns for col in ["cliente", "data", "hora", "id"]):
-            st.error("A API não retornou os campos esperados: 'cliente', 'data', 'hora', 'id'.")
-            st.write(df)  # Exibir os dados para depuração
-            return
-
-        # Selecionar colunas relevantes
-        df = df[["cliente", "data", "hora", "id"]]
-        df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
-
-        # Renderizar tabela com botões na última coluna
-        for _, row in df.iterrows():
-            cols = st.columns([4, 1, 1])  # Layout: Cliente | Alterar | Excluir
-            with cols[0]:
-                st.write(f"**{row['Cliente']}** | **Data**: {row['Data']} | **Hora**: {row['Hora']}")
-            with cols[1]:
-                if st.button("Alterar", key=f"edit_{row['id']}"):
-                    st.info(f"Funcionalidade de edição não implementada para ID {row['id']}")
-            with cols[2]:
-                if st.button("Excluir", key=f"delete_{row['id']}"):
-                    delete_appointment(row["id"])
-    else:
-        st.warning("Nenhum agendamento encontrado.")
-
-# Página de Clientes
 def clientes():
     st.title("Clientes")
     clients = api_request(URLS["get_clients"])
     if clients:
-        # Criar DataFrame e renomear colunas
         df = pd.DataFrame(clients)
-        df = df.rename(columns={
-            "name": "Nome e Sobrenome",
-            "phone": "Telefone"
-        })
-
-        # Excluir colunas indesejadas
+        df = df.rename(columns={"name": "Nome e Sobrenome", "phone": "Telefone"})
         df = df.drop(columns=["id", "created_at"], errors="ignore")
-
-        # Garantir que o telefone não tenha separador de milhares
         if "Telefone" in df.columns:
             df["Telefone"] = df["Telefone"].astype(str)
-
-        # Exibir tabela
         st.dataframe(df, use_container_width=True)
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
-# Página de Novo Agendamento
 def novo_agendamento():
     st.title("Novo Agendamento")
     st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-# Ação de Exclusão de Agendamento
-def delete_appointment(appointment_id):
-    endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
-    if api_request(endpoint, method="DELETE"):
-        st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
-        st.experimental_rerun()
-
-# Navegação entre páginas
+# Configuração do menu com destaque
 pages = {
     "Agendamentos": agendamentos,
     "Clientes": clientes,
     "Novo Agendamento": novo_agendamento,
 }
 
-st.sidebar.title("Menu")
-for page_name, page_func in pages.items():
-    if st.sidebar.button(page_name):
-        st.session_state["current_page"] = page_name
-
+# Inicializar estado da sessão
 if "current_page" not in st.session_state:
     st.session_state["current_page"] = "Agendamentos"
 
+# Estilo para o menu
+menu_style = """
+<style>
+.sidebar .sidebar-content div[role="radiogroup"] > label {{
+    font-size: 18px;
+    font-weight: bold;
+    background-color: {bg_color};
+    color: {color};
+    padding: 8px 16px;
+    margin: 4px 0;
+    border-radius: 5px;
+}}
+.sidebar .sidebar-content div[role="radiogroup"] > label:hover {{
+    background-color: #F0F0F0;
+    cursor: pointer;
+}}
+</style>
+"""
+
+# Renderizar menu lateral com destaque
+st.sidebar.title("Menu")
+for page_name in pages.keys():
+    if st.sidebar.button(page_name, key=page_name):
+        st.session_state["current_page"] = page_name
+
+# Destacar a página selecionada
+for page_name in pages.keys():
+    bg_color = "#FFD700" if st.session_state["current_page"] == page_name else "#FFFFFF"
+    color = "#000000" if st.session_state["current_page"] == page_name else "#666666"
+    st.sidebar.markdown(menu_style.format(bg_color=bg_color, color=color), unsafe_allow_html=True)
+
+# Renderizar página selecionada
 pages[st.session_state["current_page"]]()
