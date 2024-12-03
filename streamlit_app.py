@@ -76,33 +76,10 @@ def alterar_agendamento(appointment_id):
 # Função de Agendamentos
 def agendamentos():
     st.title("Agendamentos")
-    
-    # Buscar agendamentos
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
-        st.dataframe(df, use_container_width=True)  # Exibir tabela completa
-        
-        st.markdown("---")
-        
-        # Exibir ações para cada agendamento
-        for index, row in df.iterrows():
-            cols = st.columns([4, 1, 1])
-            
-            # Exibir as colunas de ações
-            with cols[0]:
-                st.write(f"**ID**: {row['id']} | **Cliente**: {row['cliente']} | **Data**: {row['data']} | **Hora**: {row['hora']}")
-            
-            # Botão Alterar
-            with cols[1]:
-                if st.button("Alterar", key=f"alter_{row['id']}"):
-                    st.experimental_set_query_params(page="alterar_agendamento", id=row["id"])
-                    st.experimental_rerun()
-            
-            # Botão Excluir
-            with cols[2]:
-                if st.button("Excluir", key=f"delete_{row['id']}"):
-                    delete_appointment(row["id"])
+        st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
     else:
         st.warning("Nenhum agendamento encontrado.")
 
