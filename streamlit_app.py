@@ -79,8 +79,19 @@ def agendamentos():
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
+
+        # Separar appointment_time em Data e Hora
+        if "appointment_time" in df.columns:
+            df["Data"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%d/%m/%Y")
+            df["Hora"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%H:%M")
+
+        # Renomear colunas
         df = df.rename(columns={"service": "Serviço", "first_time": "Primeira Vez?"})
-        df = df.drop(columns=["id", "client_id", "created_at", "deleted_at"], errors="ignore")
+
+        # Remover colunas indesejadas
+        df = df.drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore")
+
+        # Exibir tabela
         st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
     else:
         st.warning("Nenhum agendamento encontrado.")
