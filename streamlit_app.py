@@ -25,14 +25,14 @@ def api_request(url, method="GET", data=None):
         return []
 
 # Funções das páginas
-def agendamentos():
-    st.title("Agendamentos")
-    appointments = api_request(URLS["get_appointments"])
-    if appointments:
-        df = pd.DataFrame(appointments)
-        st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
-    else:
-        st.warning("Nenhum agendamento encontrado.")
+# def agendamentos():
+#     st.title("Agendamentos")
+#     appointments = api_request(URLS["get_appointments"])
+#     if appointments:
+#         df = pd.DataFrame(appointments)
+#         st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
+#     else:
+#         st.warning("Nenhum agendamento encontrado.")
 
 def clientes():
     st.title("Clientes")
