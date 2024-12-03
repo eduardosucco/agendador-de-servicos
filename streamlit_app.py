@@ -11,6 +11,9 @@ URLS = {
     "delete_appointment": f"{BASE_URL}/agendamento/:id",
 }
 
+# Streamlit interface
+st.set_page_config(page_title="Plataforma de Agendamento", layout="wide")
+
 # Função genérica para requisições
 def api_request(url, method="GET", data=None):
     try:
