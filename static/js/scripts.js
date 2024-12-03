@@ -16,6 +16,7 @@ document.getElementById('appointment-form').addEventListener('submit', async fun
         alert('Agendamento realizado com sucesso!');
         e.target.reset();
     } else {
-        alert('Erro ao agendar. Tente novamente.');
+        const error = await response.json();
+        alert(`Erro ao agendar: ${error.message}`);
     }
 });
