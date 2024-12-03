@@ -8,7 +8,7 @@ GET_CLIENTS_URL = f"{N8N_BASE_URL}/clientes"
 GET_APPOINTMENTS_URL = f"{N8N_BASE_URL}/agendamentos"
 # ADD_CLIENT_URL = f"{N8N_BASE_URL}/add_client"
 # ADD_APPOINTMENT_URL = f"{N8N_BASE_URL}/add_appointment"
-# DELETE_CLIENT_URL = f"{N8N_BASE_URL}/agendamento/:id"
+# DELETE_CLIENT_URL = f"{N8N_BASE_URL}/clientes/:id"
 DELETE_APPOINTMENT_URL = f"{N8N_BASE_URL}/agendamento/:id"
 
 # Função genérica para interagir com endpoints
@@ -21,36 +21,60 @@ def api_request(endpoint, method="GET", data=None, params=None):
         st.error(f"Erro: {e}")
         return [] if method == "GET" else False
 
-# Função para exibir tabelas com manipulação
-def display_table(data, delete_label, delete_endpoint):
-    df = pd.DataFrame(data)
-    st.dataframe(df)
-    delete_id = st.text_input(f"ID para {delete_label}")
-    if st.button(f"Deletar {delete_label}"):
-        try:
-            endpoint = delete_endpoint.replace(":id", delete_id)
-            if api_request(endpoint, method="DELETE"):
-                st.success(f"{delete_label} deletado com sucesso!")
-        except Exception as e:
-            st.error(f"Erro ao deletar {delete_label}: {e}")
+# Configuração inicial
+st.set_page_config(page_title="Agendador de Serviços", layout="wide")
 
-# Menu Lateral
-menu = st.sidebar.selectbox("Menu", ["Painel Administrativo", "Novo Agendamento"])
+# Sidebar com botões para navegação
+menu_option = st.sidebar.radio("Menu", ["Painel Administrativo", "Clientes", "Novo Agendamento"])
 
-if menu == "Painel Administrativo":
-    st.title("Painel Administrativo")
-    st.subheader("Clientes")
-    clients = api_request(GET_CLIENTS_URL)
-    display_table(clients, "Cliente", "# DELETE_CLIENT_URL (não implementado)")
+# Página: Painel Administrativo
+if menu_option == "Painel Administrativo":
+    st.title("Painel Administrativo - Agendamentos")
 
-    st.subheader("Agendamentos")
     appointments = api_request(GET_APPOINTMENTS_URL)
-    display_table(appointments, "Agendamento", DELETE_APPOINTMENT_URL)
+    if appointments:
+        st.write("Clique nos botões para editar ou excluir um agendamento.")
+        for appointment in appointments:
+            cols = st.columns([3, 1, 1])  # Divisão em colunas para o layout
+            cols[0].write(f"**Cliente**: {appointment['cliente']}, **Serviço**: {appointment['servico']}, "
+                          f"**Data**: {appointment['data']}, **Hora**: {appointment['hora']}")
+            if cols[1].button("Editar", key=f"edit_{appointment['id']}"):
+                st.info(f"Funcionalidade de edição não implementada para ID {appointment['id']}")
+            if cols[2].button("Excluir", key=f"delete_{appointment['id']}"):
+                endpoint = DELETE_APPOINTMENT_URL.replace(":id", str(appointment["id"]))
+                if api_request(endpoint, method="DELETE"):
+                    st.success(f"Agendamento ID {appointment['id']} deletado com sucesso!")
 
-elif menu == "Novo Agendamento":
+# Página: Clientes
+elif menu_option == "Clientes":
+    st.title("Clientes Cadastrados")
+
+    clients = api_request(GET_CLIENTS_URL)
+    if clients:
+        df_clients = pd.DataFrame(clients)
+        st.dataframe(df_clients, use_container_width=True)
+    else:
+        st.warning("Nenhum cliente cadastrado no momento.")
+
+# Página: Novo Agendamento
+elif menu_option == "Novo Agendamento":
     st.title("Novo Agendamento")
+
     st.subheader("Cadastrar Cliente")
-    st.warning("Endpoint ADD_CLIENT_URL não implementado")
+    st.warning("Funcionalidade de cadastro de clientes não implementada.")
 
     st.subheader("Agendar Serviço")
-    st.warning("Endpoint ADD_APPOINTMENT_URL não implementado")
+    clients = api_request(GET_CLIENTS_URL)
+    if clients:
+        client_options = {f"{c['first_name']} {c['last_name']}": c['id'] for c in clients}
+        appointment_data = {
+            "client_id": st.selectbox("Cliente", list(client_options.values())),
+            "service": st.text_input("Serviço"),
+            "date": st.date_input("Data").isoformat(),
+            "time": st.time_input("Hora").isoformat(),
+            "comment": st.text_area("Comentário"),
+        }
+        if st.button("Agendar Serviço"):
+            st.warning("Funcionalidade de agendamento de serviços não implementada.")
+    else:
+        st.warning("Nenhum cliente encontrado. Cadastre um cliente antes de agendar.")
