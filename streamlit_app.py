@@ -26,14 +26,10 @@ def agendamentos():
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
-        if all(col in df.columns for col in ["cliente", "data", "hora"]):
-            df = df[["cliente", "data", "hora"]]
-            df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
-            st.dataframe(df, use_container_width=True)
-        else:
-            st.error("A API não retornou os campos esperados.")
+        st.dataframe(df, use_container_width=True)
     else:
         st.warning("Nenhum agendamento encontrado.")
+
 
 
 
