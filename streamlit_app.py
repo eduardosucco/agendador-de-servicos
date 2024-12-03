@@ -77,24 +77,30 @@ def alterar_agendamento(appointment_id):
 def agendamentos():
     st.title("Agendamentos")
     appointments = api_request(URLS["get_appointments"])
-    if appointments:
-        df = pd.DataFrame(appointments)
-
-        # Separar appointment_time em Data e Hora
-        if "appointment_time" in df.columns:
-            df["Data"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%d/%m/%Y")
-            df["Hora"] = pd.to_datetime(df["appointment_time"]).dt.strftime("%H:%M")
-
-        # Renomear colunas
-        df = df.rename(columns={"name": "Nome e Sobrenome", "phone": "Telefone", "service": "Serviço", "first_time": "Primeira Vez?"})
-
-        # Remover colunas indesejadas
-        df = df.drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore")
-
-        # Exibir tabela
-        st.dataframe(df, use_container_width=True)  # Ajusta ao tamanho da página
-    else:
+    
+    if not appointments:
         st.warning("Nenhum agendamento encontrado.")
+        return
+
+    df = pd.DataFrame(appointments)
+
+    # Processar e formatar dados
+    if "appointment_time" in df.columns:
+        appointment_times = pd.to_datetime(df["appointment_time"])
+        df["Data"], df["Hora"] = appointment_times.dt.strftime("%d/%m/%Y"), appointment_times.dt.strftime("%H:%M")
+
+    df = df.rename(columns={
+        "name": "Nome e Sobrenome", 
+        "phone": "Telefone", 
+        "service": "Serviço", 
+        "first_time": "Primeira Vez?"
+    }).drop(columns=["id", "client_id", "created_at", "deleted_at", "appointment_time"], errors="ignore")
+
+    if "Telefone" in df.columns:
+        df["Telefone"] = df["Telefone"].astype(str)
+
+    # Exibir tabela
+    st.dataframe(df, use_container_width=True)
 
 # Função de Clientes
 def clientes():
