@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         tr.appendChild(serviceTd);
 
         const timeTd = document.createElement('td');
-        timeTd.textContent = new Date(app.appointment_time).toLocaleString();
+        const appointmentDate = new Date(app.appointment_time);
+        timeTd.textContent = appointmentDate.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         tr.appendChild(timeTd);
 
         tbody.appendChild(tr);
