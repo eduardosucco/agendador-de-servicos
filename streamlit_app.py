@@ -6,9 +6,6 @@ import requests
 N8N_BASE_URL = "https://n8n.massadar.me/webhook/agendador-de-servicos"
 GET_CLIENTS_URL = f"{N8N_BASE_URL}/clientes"
 GET_APPOINTMENTS_URL = f"{N8N_BASE_URL}/agendamentos"
-# ADD_CLIENT_URL = f"{N8N_BASE_URL}/add_client"
-# ADD_APPOINTMENT_URL = f"{N8N_BASE_URL}/add_appointment"
-# DELETE_CLIENT_URL = f"{N8N_BASE_URL}/clientes/:id"
 DELETE_APPOINTMENT_URL = f"{N8N_BASE_URL}/agendamento/:id"
 
 # Função genérica para interagir com endpoints
@@ -35,15 +32,20 @@ if menu_option == "Painel Administrativo":
     if appointments:
         st.write("Clique nos botões para editar ou excluir um agendamento.")
         for appointment in appointments:
+            cliente = appointment.get("cliente", "Não informado")
+            servico = appointment.get("servico", "Não informado")
+            data = appointment.get("data", "Não informado")
+            hora = appointment.get("hora", "Não informado")
+            appointment_id = appointment.get("id")
+
             cols = st.columns([3, 1, 1])  # Divisão em colunas para o layout
-            cols[0].write(f"**Cliente**: {appointment['cliente']}, **Serviço**: {appointment['servico']}, "
-                          f"**Data**: {appointment['data']}, **Hora**: {appointment['hora']}")
-            if cols[1].button("Editar", key=f"edit_{appointment['id']}"):
-                st.info(f"Funcionalidade de edição não implementada para ID {appointment['id']}")
-            if cols[2].button("Excluir", key=f"delete_{appointment['id']}"):
-                endpoint = DELETE_APPOINTMENT_URL.replace(":id", str(appointment["id"]))
+            cols[0].write(f"**Cliente**: {cliente}, **Serviço**: {servico}, **Data**: {data}, **Hora**: {hora}")
+            if cols[1].button("Editar", key=f"edit_{appointment_id}"):
+                st.info(f"Funcionalidade de edição não implementada para ID {appointment_id}")
+            if cols[2].button("Excluir", key=f"delete_{appointment_id}"):
+                endpoint = DELETE_APPOINTMENT_URL.replace(":id", str(appointment_id))
                 if api_request(endpoint, method="DELETE"):
-                    st.success(f"Agendamento ID {appointment['id']} deletado com sucesso!")
+                    st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
 
 # Página: Clientes
 elif menu_option == "Clientes":
