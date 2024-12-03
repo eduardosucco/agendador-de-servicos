@@ -20,33 +20,69 @@ def api_request(url, method="GET", data=None):
         st.error(f"Erro: {e}")
         return []
 
+# Função para exibir DataFrame com ações
+def show_table_with_actions(df, delete_action=None, edit_action=None):
+    for idx, row in df.iterrows():
+        cols = st.columns([4, 1, 1])  # Ajuste do layout
+        with cols[0]:
+            st.write(f"**Cliente**: {row['cliente']} | **Serviço**: {row['servico']} | **Data**: {row['data']} | **Hora**: {row['hora']}")
+        with cols[1]:
+            if st.button("Editar", key=f"edit_{row['id']}"):
+                if edit_action:
+                    edit_action(row)
+        with cols[2]:
+            if st.button("Excluir", key=f"delete_{row['id']}"):
+                if delete_action:
+                    delete_action(row)
+
 # Páginas
 def painel_administrativo():
     st.title("Painel Administrativo")
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
-        st.dataframe(df, use_container_width=True)
-        for _, row in df.iterrows():
-            cols = st.columns([4, 1])
-            with cols[1]:
-                if st.button("Excluir", key=row["id"]):
-                    api_request(URLS["delete_appointment"].replace(":id", str(row["id"])), method="DELETE")
-                    st.experimental_rerun()
+        st.write("Clique em **Editar** para modificar ou **Excluir** para remover um agendamento.")
+        show_table_with_actions(
+            df,
+            delete_action=lambda row: delete_appointment(row["id"]),
+            edit_action=lambda row: st.info(f"Funcionalidade de edição não implementada para ID {row['id']}")
+        )
     else:
         st.warning("Nenhum agendamento encontrado.")
 
 def clientes():
     st.title("Clientes")
     clients = api_request(URLS["get_clients"])
-    df = pd.DataFrame(clients) if clients else pd.DataFrame(columns=["Nenhum cliente encontrado"])
-    st.dataframe(df, use_container_width=True)
+    if clients:
+        df = pd.DataFrame(clients)
+        st.dataframe(df, use_container_width=True)
+    else:
+        st.warning("Nenhum cliente cadastrado no momento.")
 
 def novo_agendamento():
     st.title("Novo Agendamento")
     st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-# Navegação entre páginas
-pages = {"Painel Administrativo": painel_administrativo, "Clientes": clientes, "Novo Agendamento": novo_agendamento}
-selected_page = st.sidebar.selectbox("Menu", pages.keys())
-pages[selected_page]()
+# Ações
+def delete_appointment(appointment_id):
+    endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
+    if api_request(endpoint, method="DELETE"):
+        st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
+        st.experimental_rerun()
+
+# Navegação
+pages = {
+    "Painel Administrativo": painel_administrativo,
+    "Clientes": clientes,
+    "Novo Agendamento": novo_agendamento,
+}
+
+st.sidebar.title("Menu")
+for page_name, page_func in pages.items():
+    if st.sidebar.button(page_name):
+        st.session_state["current_page"] = page_name
+
+if "current_page" not in st.session_state:
+    st.session_state["current_page"] = "Painel Administrativo"
+
+pages[st.session_state["current_page"]]()
