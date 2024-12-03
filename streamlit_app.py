@@ -68,19 +68,13 @@ def delete_appointment(appointment_id):
         st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
         st.experimental_rerun()
 
-# Barra de Navegação (NavBar)
-selected = option_menu(
-    menu_title=None,  # Sem título no menu
-    options=["Agendamentos", "Clientes", "Novo Agendamento"],
-    icons=["calendar-check", "people", "plus-circle"],
-    menu_icon="menu-app", default_index=0, orientation="horizontal",
-    styles={
-        "container": {"padding": "0!important", "background-color": "#fafafa"},
-        "icon": {"color": "orange", "font-size": "20px"}, 
-        "nav-link": {"font-size": "20px", "text-align": "center", "margin": "0px", "--hover-color": "#eee"},
-        "nav-link-selected": {"background-color": "#FFD700"},
-    }
-)
+# NavBar na Sidebar
+with st.sidebar:
+    selected = option_menu(
+        "Menu", ["Agendamentos", "Clientes", "Novo Agendamento"],
+        icons=["calendar-check", "people", "plus-circle"],
+        menu_icon="cast", default_index=0
+    )
 
 # Navegar para a página selecionada
 if selected == "Agendamentos":
