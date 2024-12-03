@@ -24,26 +24,32 @@ def api_request(url, method="GET", data=None):
 # Funções das páginas
 def agendamentos():
     st.title("Agendamentos")
+    
+    # Buscar dados dos agendamentos
     appointments = api_request(URLS["get_appointments"])
     if appointments:
+        # Criar DataFrame com os dados retornados
         df = pd.DataFrame(appointments)
+        
+        # Garantir que as colunas esperadas existam no DataFrame
         if not all(col in df.columns for col in ["cliente", "data", "hora", "id"]):
             st.error("A API não retornou os campos esperados: 'cliente', 'data', 'hora', 'id'.")
+            st.write(df)  # Exibir para depuração
             return
+        
+        # Selecionar e renomear colunas relevantes
         df = df[["cliente", "data", "hora", "id"]]
-        df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
-        for _, row in df.iterrows():
-            cols = st.columns([3, 1, 1])
-            with cols[0]:
-                st.write(f"**Cliente**: {row['Cliente']} | **Data**: {row['Data']} | **Hora**: {row['Hora']}")
-            with cols[1]:
-                if st.button("Alterar", key=f"edit_{row['id']}"):
-                    st.info(f"Funcionalidade de edição ainda não implementada para ID {row['id']}")
-            with cols[2]:
-                if st.button("Excluir", key=f"delete_{row['id']}"):
-                    delete_appointment(row["id"])
+        df.rename(columns={
+            "cliente": "Cliente",
+            "data": "Data",
+            "hora": "Hora"
+        }, inplace=True)
+
+        # Exibir DataFrame
+        st.dataframe(df.drop(columns=["id"]), use_container_width=True)
     else:
         st.warning("Nenhum agendamento encontrado.")
+
 
 def clientes():
     st.title("Clientes")
