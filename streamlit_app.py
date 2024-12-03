@@ -20,40 +20,30 @@ def api_request(url, method="GET", data=None):
         st.error(f"Erro: {e}")
         return []
 
-# Função para exibir DataFrame com ações
-def show_table_with_actions(df, delete_action=None, edit_action=None):
-    for idx, row in df.iterrows():
-        cliente = row.get("cliente", "Não informado")
-        servico = row.get("servico", "Não informado")
-        data = row.get("data", "Não informado")
-        hora = row.get("hora", "Não informado")
-        cols = st.columns([4, 1, 1])  # Ajuste do layout
-        with cols[0]:
-            st.write(f"**Cliente**: {cliente} | **Serviço**: {servico} | **Data**: {data} | **Hora**: {hora}")
-        with cols[1]:
-            if st.button("Editar", key=f"edit_{row['id']}"):
-                if edit_action:
-                    edit_action(row)
-        with cols[2]:
-            if st.button("Excluir", key=f"delete_{row['id']}"):
-                if delete_action:
-                    delete_action(row)
-
-# Páginas
+# Painel Administrativo: Tabela com opções de Alterar e Excluir
 def painel_administrativo():
-    st.title("Painel Administrativo")
+    st.title("Painel Administrativo - Agendamentos")
+
+    # Buscar agendamentos
     appointments = api_request(URLS["get_appointments"])
     if appointments:
         df = pd.DataFrame(appointments)
-        st.write("Clique em **Editar** para modificar ou **Excluir** para remover um agendamento.")
-        show_table_with_actions(
-            df,
-            delete_action=lambda row: delete_appointment(row["id"]),
-            edit_action=lambda row: st.info(f"Funcionalidade de edição não implementada para ID {row['id']}")
-        )
+        df["Ações"] = None  # Coluna vazia para botões
+        st.dataframe(df, use_container_width=True)
+
+        # Criar botões para cada registro
+        for index, row in df.iterrows():
+            col1, col2 = st.columns([1, 1])
+            with col1:
+                if st.button("Alterar", key=f"edit_{row['id']}"):
+                    st.info(f"Funcionalidade de edição não implementada para ID {row['id']}")
+            with col2:
+                if st.button("Excluir", key=f"delete_{row['id']}"):
+                    delete_appointment(row["id"])
     else:
         st.warning("Nenhum agendamento encontrado.")
 
+# Página de Clientes
 def clientes():
     st.title("Clientes")
     clients = api_request(URLS["get_clients"])
@@ -63,18 +53,19 @@ def clientes():
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
+# Página de Novo Agendamento
 def novo_agendamento():
     st.title("Novo Agendamento")
     st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-# Ações
+# Ação de Exclusão de Agendamento
 def delete_appointment(appointment_id):
     endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
     if api_request(endpoint, method="DELETE"):
         st.success(f"Agendamento ID {appointment_id} deletado com sucesso!")
         st.experimental_rerun()
 
-# Navegação
+# Navegação entre páginas
 pages = {
     "Painel Administrativo": painel_administrativo,
     "Clientes": clientes,
