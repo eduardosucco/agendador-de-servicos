@@ -2,7 +2,7 @@ import os
 from flask import Flask, render_template, request, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Carrega as variáveis de ambiente do arquivo .env
 load_dotenv()
@@ -18,52 +18,54 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 @app.route('/')
 def index():
     """
-    Rota para a página inicial do cliente onde pode agendar serviços.
+    Rota para a página inicial (se necessário).
     """
-    return render_template('index.html')
+    return jsonify({'message': 'Servidor funcionando. Use o Jotform para agendar!'})
 
 @app.route('/admin')
 def admin():
     """
-    Rota para a página de administração onde pode visualizar os agendamentos.
+    Rota para a administração de agendamentos.
     """
-    return render_template('admin.html')
+    return jsonify({'message': 'Área administrativa em construção!'})
 
 @app.route('/api/appointments', methods=['POST'])
 def create_appointment():
     """
-    API para criar um novo agendamento.
-    Recebe dados do cliente, verifica ou cria o cliente no Supabase e cria o agendamento.
+    Endpoint para receber dados do Jotform via webhook.
     """
-    data = request.json
-    name = data.get('name')
+    data = request.json  # Jotform envia os dados em JSON
+
+    # Mapear os campos enviados pelo Jotform
+    name = data.get('name')  # Substitua conforme os nomes dos campos no Jotform
     email = data.get('email')
     phone = data.get('phone')
     service = data.get('service')
     appointment_time_str = data.get('appointment_time')
-    
-    # Valida o formato da data e hora
+
+    # Validação básica dos dados
+    if not all([name, email, phone, service, appointment_time_str]):
+        return jsonify({'message': 'Dados incompletos recebidos.'}), 400
+
+    # Validar formato da data e hora
     try:
         appointment_time = datetime.fromisoformat(appointment_time_str)
     except ValueError:
         return jsonify({'message': 'Formato de data e hora inválido.'}), 400
 
-    # Verificar se o horário está entre 8h e 19h em intervalos de 1h
+    # Validar se o horário está entre 8h e 19h em incrementos de 1h
     start_time = appointment_time.replace(hour=8, minute=0, second=0, microsecond=0)
     end_time = appointment_time.replace(hour=19, minute=0, second=0, microsecond=0)
     if appointment_time < start_time or appointment_time > end_time or appointment_time.minute != 0:
         return jsonify({'message': 'Horário inválido. Escolha horários de 1h em 1h, entre 08:00 e 19:00.'}), 400
 
-    # Verifica se o cliente já existe
+    # Verificar ou criar cliente no Supabase
     response = supabase.table('clients').select('*').eq('email', email).single().execute()
     if response.status_code != 200:
         return jsonify({'message': 'Erro ao acessar o Supabase.'}), 500
-    
+
     client = response.data
-    if client:
-        client_id = client['id']
-    else:
-        # Cria um novo cliente
+    if not client:
         new_client = supabase.table('clients').insert({
             'name': name,
             'email': email,
@@ -72,8 +74,10 @@ def create_appointment():
         if new_client.status_code != 201:
             return jsonify({'message': 'Erro ao criar cliente.'}), 500
         client_id = new_client.data[0]['id']
+    else:
+        client_id = client['id']
 
-    # Cria o agendamento
+    # Criar o agendamento
     appointment = supabase.table('appointments').insert({
         'client_id': client_id,
         'service': service,
@@ -87,13 +91,19 @@ def create_appointment():
 @app.route('/api/appointments', methods=['GET'])
 def get_appointments():
     """
-    API para obter todos os agendamentos com informações dos clientes.
+    Endpoint para listar todos os agendamentos e seus clientes.
     """
     response = supabase.table('appointments').select('*, clients(*)').execute()
     if response.status_code != 200:
         return jsonify({'message': 'Erro ao buscar agendamentos.'}), 500
     appointments = response.data
     return jsonify(appointments), 200
+
+@app.route('/api/test-webhook', methods=['POST'])
+def test_webhook():
+    data = request.json
+    app.logger.info(f"Dados recebidos no webhook de teste: {data}")
+    return jsonify({'message': 'Webhook recebido com sucesso!'}), 200
 
 if __name__ == '__main__':
     # Remova o parâmetro 'debug=True' em produção
