@@ -47,9 +47,22 @@ def clientes():
     else:
         st.warning("Nenhum cliente cadastrado no momento.")
 
-def novo_agendamento():
-    st.title("Novo Agendamento")
-    st.warning("Funcionalidade de agendamento ainda não implementada.")
+def agendamentos():
+    st.title("Agendamentos")
+    appointments = api_request(URLS["get_appointments"])
+    if appointments:
+        df = pd.DataFrame(appointments)
+
+        # Adicionar coluna de botões para exclusão
+        for index, row in df.iterrows():
+            col1, col2 = st.columns([4, 1])
+            with col1:
+                st.write(f"**Cliente**: {row['cliente']}, **Data**: {row['data']}, **Hora**: {row['hora']}")
+            with col2:
+                if st.button("Excluir", key=f"delete_{row['id']}"):
+                    delete_appointment(row["id"])
+    else:
+        st.warning("Nenhum agendamento encontrado.")
 
 def delete_appointment(appointment_id):
     endpoint = URLS["delete_appointment"].replace(":id", str(appointment_id))
@@ -64,6 +77,28 @@ with st.sidebar:
         icons=["calendar-check", "people", "plus-circle"],
         menu_icon="cast", default_index=0
     )
+
+def novo_agendamento():
+    st.title("Novo Agendamento")
+    
+    # Formulário para cadastrar agendamento
+    cliente = st.text_input("Nome do Cliente")
+    data = st.date_input("Data do Agendamento")
+    hora = st.time_input("Hora do Agendamento")
+    servico = st.text_input("Serviço")
+    
+    if st.button("Cadastrar"):
+        # Dados do novo agendamento
+        agendamento = {
+            "cliente": cliente,
+            "data": str(data),
+            "hora": str(hora),
+            "servico": servico,
+        }
+        response = api_request(URLS["get_appointments"], method="POST", data=agendamento)
+        if response:
+            st.success("Agendamento cadastrado com sucesso!")
+            st.experimental_rerun()
 
 # Navegar para a página selecionada
 if selected == "Agendamentos":
