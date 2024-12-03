@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, jsonify, session
+from flask import Flask, render_template, request, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
 from datetime import datetime
