@@ -42,47 +42,52 @@ def novo_agendamento():
     st.title("Novo Agendamento")
     st.warning("Funcionalidade de agendamento ainda não implementada.")
 
-# Configuração do menu com destaque
+# Configuração do NavBar
 pages = {
     "Agendamentos": agendamentos,
     "Clientes": clientes,
     "Novo Agendamento": novo_agendamento,
 }
 
-# Inicializar estado da sessão
 if "current_page" not in st.session_state:
     st.session_state["current_page"] = "Agendamentos"
 
-# Estilo para o menu
-menu_style = """
+# Estilo da NavBar
+navbar_style = """
 <style>
-.sidebar .sidebar-content div[role="radiogroup"] > label {{
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    background-color: #F0F0F0;
+    padding: 10px;
+    border-bottom: 2px solid #CCCCCC;
+}
+.navbar-item {
     font-size: 18px;
     font-weight: bold;
-    background-color: {bg_color};
-    color: {color};
     padding: 8px 16px;
-    margin: 4px 0;
+    color: #666666;
+    text-decoration: none;
     border-radius: 5px;
-}}
-.sidebar .sidebar-content div[role="radiogroup"] > label:hover {{
-    background-color: #F0F0F0;
-    cursor: pointer;
-}}
+}
+.navbar-item:hover {
+    background-color: #E0E0E0;
+}
+.navbar-item-selected {
+    background-color: #FFD700;
+    color: #000000;
+}
 </style>
 """
 
-# Renderizar menu lateral com destaque
-st.sidebar.title("Menu")
+# Renderizar NavBar
+st.markdown(navbar_style, unsafe_allow_html=True)
+navbar = '<div class="navbar">'
 for page_name in pages.keys():
-    if st.sidebar.button(page_name, key=page_name):
-        st.session_state["current_page"] = page_name
-
-# Destacar a página selecionada
-for page_name in pages.keys():
-    bg_color = "#FFD700" if st.session_state["current_page"] == page_name else "#FFFFFF"
-    color = "#000000" if st.session_state["current_page"] == page_name else "#666666"
-    st.sidebar.markdown(menu_style.format(bg_color=bg_color, color=color), unsafe_allow_html=True)
+    css_class = "navbar-item-selected" if st.session_state["current_page"] == page_name else "navbar-item"
+    navbar += f'<a href="#" class="{css_class}" onclick="window.location.reload();">{page_name}</a>'
+navbar += "</div>"
+st.markdown(navbar, unsafe_allow_html=True)
 
 # Renderizar página selecionada
 pages[st.session_state["current_page"]]()
