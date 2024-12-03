@@ -20,24 +20,26 @@ def api_request(url, method="GET", data=None):
         st.error(f"Erro: {e}")
         return []
 
-# Painel Administrativo: Tabela com opções de Alterar e Excluir
-def painel_administrativo():
-    st.title("Painel Administrativo - Agendamentos")
+# Página de Agendamentos
+def agendamentos():
+    st.title("Agendamentos")
 
     # Buscar agendamentos
     appointments = api_request(URLS["get_appointments"])
     if appointments:
-        df = pd.DataFrame(appointments)
-        df["Ações"] = None  # Coluna vazia para botões
-        st.dataframe(df, use_container_width=True)
+        # Selecionar apenas Nome do Cliente, Data e Hora
+        df = pd.DataFrame(appointments)[["cliente", "data", "hora", "id"]]
+        df.rename(columns={"cliente": "Cliente", "data": "Data", "hora": "Hora"}, inplace=True)
 
-        # Criar botões para cada registro
+        # Renderizar tabela com botões na última coluna
         for index, row in df.iterrows():
-            col1, col2 = st.columns([1, 1])
-            with col1:
+            cols = st.columns([3, 1, 1])  # Layout: Cliente | Alterar | Excluir
+            with cols[0]:
+                st.write(f"**{row['Cliente']}** | **Data**: {row['Data']} | **Hora**: {row['Hora']}")
+            with cols[1]:
                 if st.button("Alterar", key=f"edit_{row['id']}"):
                     st.info(f"Funcionalidade de edição não implementada para ID {row['id']}")
-            with col2:
+            with cols[2]:
                 if st.button("Excluir", key=f"delete_{row['id']}"):
                     delete_appointment(row["id"])
     else:
@@ -67,7 +69,7 @@ def delete_appointment(appointment_id):
 
 # Navegação entre páginas
 pages = {
-    "Painel Administrativo": painel_administrativo,
+    "Agendamentos": agendamentos,
     "Clientes": clientes,
     "Novo Agendamento": novo_agendamento,
 }
@@ -78,6 +80,6 @@ for page_name, page_func in pages.items():
         st.session_state["current_page"] = page_name
 
 if "current_page" not in st.session_state:
-    st.session_state["current_page"] = "Painel Administrativo"
+    st.session_state["current_page"] = "Agendamentos"
 
 pages[st.session_state["current_page"]]()
